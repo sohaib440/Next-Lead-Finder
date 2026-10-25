@@ -74,7 +74,7 @@ whatsappRouter.post("/queue", async (req, res) => {
       return {
         templateName: useFormats ? (format.template?.name ?? null) : null,
         source: useFormats ? format.source : null,
-        reason: useFormats && !format.template ? "No WhatsApp message set for this campaign" : null,
+        reason: useFormats && !format.template ? "No WhatsApp message set for this lead" : null,
         leadId: String(lead._id),
         businessName: lead.businessName,
         city: lead.city,

@@ -51,6 +51,7 @@ import { TagInput } from "@/components/TagInput";
 import { TaskDialog, TaskRow } from "@/components/Tasks";
 import { useAuth, useInvalidateData, useLead, useSettings } from "@/hooks/queries";
 import { LeadOwnerCard } from "@/components/LeadOwnerCard";
+import { LeadWhatsAppCard } from "@/components/LeadWhatsAppCard";
 import { api } from "@/lib/api";
 import { formatDate, formatDateTime, formatMoney, relativeTime } from "@/utils/format";
 import type { Activity, ActivityType, Lead, LeadInput, LeadStage } from "@/types";
@@ -281,6 +282,8 @@ function LeadPage() {
           </Card>
 
           <LeadOwnerCard lead={lead} activities={activities} tasks={tasks} />
+
+          {isAdmin && <LeadWhatsAppCard lead={lead} />}
 
           <DealCard lead={lead} onUpdate={update} />
 

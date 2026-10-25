@@ -134,6 +134,7 @@ export async function mergeLeads(primaryId, duplicateIds, by) {
   for (const d of dups) {
     for (const f of FILL_FIELDS) if (!primary[f] && d[f]) primary[f] = d[f];
     if (primary.dealValue == null && d.dealValue != null) primary.dealValue = d.dealValue;
+    if (!primary.whatsappTemplateId && d.whatsappTemplateId) primary.whatsappTemplateId = d.whatsappTemplateId;
     if (d.lastContactedAt && (!primary.lastContactedAt || d.lastContactedAt > primary.lastContactedAt)) {
       primary.lastContactedAt = d.lastContactedAt;
     }

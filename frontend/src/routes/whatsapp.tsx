@@ -174,7 +174,7 @@ function WhatsAppPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5">
+    <div className="w-full space-y-5">
       <div>
         <h2 className="font-display text-xl font-bold">WhatsApp outreach</h2>
         <p className="text-sm text-muted-foreground">
@@ -184,7 +184,7 @@ function WhatsAppPage() {
       </div>
 
       {!queue ? (
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <div className="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-2">
           <Card className="card-shadow rounded-xl">
             <CardHeader>
               <CardTitle className="font-display text-base font-semibold">1. Who</CardTitle>
@@ -321,10 +321,10 @@ function WhatsAppPage() {
                     onCheckedChange={(v) => setCampaignFormats(v === true)}
                   />
                   <span>
-                    <span className="block text-sm font-medium">Use each campaign's message</span>
+                    <span className="block text-sm font-medium">Use each lead's message</span>
                     <span className="block text-xs text-muted-foreground">
-                      The message you set per search (Search History → WhatsApp message), or the
-                      default from Settings.
+                      The message assigned to that lead, or the one you set for its campaign
+                      (Search History → WhatsApp message).
                     </span>
                   </span>
                 </Label>
@@ -333,8 +333,7 @@ function WhatsAppPage() {
                 <p className="flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm text-muted-foreground">
                   <Lock className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>
-                    Each business gets the message {isAdmin ? "you" : "your admin"} set for its
-                    campaign, personalised with its details.
+                    Each business gets the message assigned to it, personalised with its details.
                     {isAdmin
                       ? ""
                       : " You'll see every message in the list before opening WhatsApp."}

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { Search } from "./Search.js";
 import { phoneType } from "../services/phone.js";
 import { keysFor } from "./leadKeys.js";
 import { computeOpportunity } from "./opportunity.js";
@@ -40,6 +41,8 @@ const leadSchema = new mongoose.Schema(
     // CRM fields — never touched by the scraper once a lead exists.
     stage: { type: String, enum: LEAD_STAGES, default: "new", index: true },
     priority: { type: String, enum: LEAD_PRIORITIES, default: "medium", index: true },
+    // The WhatsApp template assigned to this lead. Set from its campaign, or chosen for this lead alone.
+    whatsappTemplateId: { type: mongoose.Schema.Types.ObjectId, ref: "Template", default: null },
     // WhatsApp: "yes" / "no" once someone tried to message the number, else "unknown".
     whatsappStatus: { type: String, enum: ["unknown", "yes", "no"], default: "unknown", index: true },
     whatsappCheckedAt: { type: Date, default: null },
@@ -76,6 +79,7 @@ const leadSchema = new mongoose.Schema(
     toJSON: {
       transform(_doc, ret) {
         ret.id = String(ret._id);
+        if (ret.whatsappTemplateId) ret.whatsappTemplateId = String(ret.whatsappTemplateId);
         ret.dateAdded = ret.createdAt;
         delete ret._id;
         delete ret.__v;
@@ -146,6 +150,20 @@ export async function migrateLeads() {
   await refreshScores({ opportunityReasons: { $exists: false } });
   await refreshScores({ phoneType: { $exists: false } });
   await Lead.updateMany({ whatsappStatus: { $exists: false } }, { $set: { whatsappStatus: "unknown" } });
+
+  // Copy each campaign's WhatsApp template onto its leads that don't have one of their own yet.
+  const withMessage = await Search.find({ whatsappTemplateId: { $ne: null } }, { whatsappTemplateId: 1 });
+  for (const search of withMessage) {
+    await Lead.updateMany(
+      {
+        $and: [
+          { $or: [{ searchIds: search._id }, { searchId: search._id }] },
+          { whatsappTemplateId: null },
+        ],
+      },
+      { $set: { whatsappTemplateId: search.whatsappTemplateId } },
+    );
+  }
 
   // Long Maps URLs -> short, stable Google Business Profile links.
   const longUrls = await Lead.find({ sourceUrl: /!19sChIJ/ }, { sourceUrl: 1 });

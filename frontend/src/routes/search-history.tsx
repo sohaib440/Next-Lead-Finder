@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Eye, History, Loader2, MoreHorizontal, RotateCcw, Search, Send, Share2, Shuffle, Trash2, Users, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -80,7 +80,7 @@ function SearchHistoryPage() {
   const [whatsappFor, setWhatsappFor] = useState<SearchRecord | null>(null);
   const [distributing, setDistributing] = useState<DistributeTarget | null>(null);
   const { data: templates = [] } = useTemplates();
-  const templateName = (id: string | null | undefined) => (id ? templates.find((t) => t.id === id)?.name : undefined);
+  const templateFor = (id: string | null | undefined) => (id ? templates.find((t) => t.id === id) : undefined);
   const { isAdmin, can } = useAuth();
   const [deleteLeads, setDeleteLeads] = useState(false);
 
@@ -198,11 +198,16 @@ function SearchHistoryPage() {
                             New leads auto-assigned to {s.autoDistribute.userIds.length} staff
                           </p>
                         )}
-                        {templateName(s.whatsappTemplateId) && (
-                          <p className="text-xs text-success">
-                            <MessageCircle className="mr-1 inline h-3 w-3" />
-                            WhatsApp: {templateName(s.whatsappTemplateId)}
-                          </p>
+                        {templateFor(s.whatsappTemplateId) && (
+                          <div className="mt-0.5 text-xs text-success">
+                            <p>
+                              <MessageCircle className="mr-1 inline h-3 w-3" />
+                              WhatsApp: {templateFor(s.whatsappTemplateId)?.name}
+                            </p>
+                            <p className="line-clamp-2 whitespace-pre-line pl-4 text-muted-foreground">
+                              {templateFor(s.whatsappTemplateId)?.body}
+                            </p>
+                          </div>
                         )}
                         <p className="text-xs text-muted-foreground">
                           {[s.keyword && `“${s.keyword}”`, `max ${formatNumber(s.maxResults)}`, s.websiteFilter === "with" && "websites only",
@@ -260,7 +265,7 @@ function SearchHistoryPage() {
                                 <Send className="h-4 w-4" /> Email these leads
                               </DropdownMenuItem>
                             )}
-                            {isAdmin && s.leadsFound > 0 && (
+                            {isAdmin && (
                               <DropdownMenuItem onClick={() => setWhatsappFor(s)}>
                                 <MessageCircle className="h-4 w-4" /> WhatsApp message…
                               </DropdownMenuItem>
@@ -296,6 +301,43 @@ function SearchHistoryPage() {
           )}
         </CardContent>
       </Card>
+
+      {isAdmin && (
+        <Card className="card-shadow rounded-xl">
+          <CardHeader>
+            <CardTitle className="font-display text-base font-semibold">Created WhatsApp templates</CardTitle>
+            <CardDescription>
+              Every saved message. A check on a campaign row shows which one that campaign uses.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {templates.filter((t) => t.channel === "whatsapp").length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No WhatsApp templates yet. Open a campaign’s menu and choose WhatsApp message… to create one.
+              </p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {templates
+                  .filter((t) => t.channel === "whatsapp")
+                  .map((t) => {
+                    const assigned = (searches ?? []).filter((s) => s.whatsappTemplateId === t.id);
+                    return (
+                      <li key={t.id} className="py-3 first:pt-0 last:pb-0">
+                        <p className="font-medium">{t.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {assigned.length
+                            ? `Assigned to ${assigned.map((s) => s.name).join(", ")}`
+                            : "Not assigned to a campaign yet"}
+                        </p>
+                        <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-sm text-foreground/80">{t.body}</p>
+                      </li>
+                    );
+                  })}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <ShareSearchDialog search={sharing} onClose={() => setSharing(null)} />
       <SearchWhatsAppDialog search={whatsappFor} onClose={() => setWhatsappFor(null)} />

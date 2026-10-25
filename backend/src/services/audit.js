@@ -43,6 +43,7 @@ const ROUTES = [
   ["POST", /^\/leads\/bulk-update$/, "leads.bulk", (b) => (b?.stage ? `Moved ${count(b)} leads to ${STAGE_LABELS[b.stage] ?? b.stage}` : `Updated ${count(b)} leads`)],
   ["POST", /^\/leads\/bulk-delete$/, "leads.delete", (b) => `Deleted ${count(b)} leads`],
   ["POST", /^\/leads\/(\w{24})\/whatsapp-result$/, "whatsapp.result", (b) => (b?.result === "sent" ? "Sent a WhatsApp message" : b?.result === "not_on_whatsapp" ? "Marked a number as not on WhatsApp" : "Opened WhatsApp but didn't send")],
+  ["PUT", /^\/leads\/(\w{24})\/whatsapp$/, "lead.whatsapp", () => "Set a lead's WhatsApp message"],
   ["POST", /^\/leads\/assign$/, "leads.assign", (b) => `Assigned ${count(b)} leads`],
   ["POST", /^\/leads\/distribute$/, "leads.distribute", (b) => (b?.preview ? "Previewed a lead distribution" : "Distributed leads to staff")],
   ["PUT", /^\/searches\/(\w{24})\/distribution$/, "search.distribution", () => "Changed a campaign's auto-assignment"],

@@ -8,6 +8,7 @@ import { notify } from "../services/notify.js";
 import { Activity } from "../models/Activity.js";
 import { LEAD_PRIORITIES, LEAD_STAGES, Lead, dedupeKeyFor, refreshScores } from "../models/Lead.js";
 import { Task } from "../models/Task.js";
+import { Template } from "../models/Template.js";
 import { deleteLeads, logActivity, setStage } from "../services/crm.js";
 import { DEFAULT_MATCH_ON, findDuplicateGroups, mergeLeads } from "../services/dedupe.js";
 import { cancelEnrich, currentEnrichJob, startEnrich } from "../services/enrichRunner.js";
@@ -435,6 +436,29 @@ leadsRouter.delete("/:id", requireAdmin, async (req, res) => {
   const deleted = await deleteLeads(scoped(req.user, { _id: req.params.id }));
   if (deleted === 0) return res.status(404).json({ error: "Lead not found" });
   res.status(204).end();
+});
+
+/** Admin: the WhatsApp template for this one lead. null clears it so the campaign message is used. */
+leadsRouter.put("/:id/whatsapp", requireAdmin, async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ error: "Invalid id" });
+  const lead = await Lead.findById(req.params.id);
+  if (!lead) return res.status(404).json({ error: "Lead not found" });
+  const templateId = req.body?.templateId ?? null;
+  let template = null;
+  if (templateId !== null) {
+    if (!mongoose.isValidObjectId(templateId)) return res.status(400).json({ error: "Choose a WhatsApp template." });
+    template = await Template.findOne({ _id: templateId, channel: "whatsapp" });
+    if (!template) return res.status(400).json({ error: "Choose a WhatsApp template." });
+  }
+  lead.whatsappTemplateId = templateId;
+  if (!(await saveLead(lead, res))) return;
+  res.locals.audit = {
+    label: template
+      ? `Set the WhatsApp message for “${lead.businessName}” to “${template.name}”`
+      : `Cleared the WhatsApp message on “${lead.businessName}”`,
+    target: { type: "lead", id: String(lead._id), label: lead.businessName },
+  };
+  res.json(lead);
 });
 
 /**

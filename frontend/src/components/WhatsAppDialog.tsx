@@ -175,10 +175,12 @@ export function WhatsAppDialog({
                 {format.data?.template && (
                   <p className="flex items-center gap-1.5 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
                     {locked && <Lock className="h-3.5 w-3.5 shrink-0" />}
-                    Message “{format.data.template.name}” set by your admin for{" "}
-                    {format.data.source === "Default message"
-                      ? "all leads"
-                      : `“${format.data.source}”`}
+                    Message “{format.data.template.name}”{" "}
+                    {format.data.source === "This lead"
+                      ? "assigned to this lead"
+                      : format.data.source === "Default message"
+                        ? "set as the default for leads without their own"
+                        : `set for “${format.data.source}”`}
                     {locked && " — it can't be changed here."}
                   </p>
                 )}

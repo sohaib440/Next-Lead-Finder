@@ -18,7 +18,7 @@ function validate(body) {
   const errors = {};
   if (!String(body.name ?? "").trim()) errors.name = "Give the template a name.";
   if (body.channel !== "whatsapp" && !String(body.subject ?? "").trim()) errors.subject = "Enter a subject line.";
-  if (!String(body.body ?? "").trim()) errors.body = "Write the email body.";
+  if (!String(body.body ?? "").trim()) errors.body = body.channel === "whatsapp" ? "Write the WhatsApp message." : "Write the email body.";
   const unknown = unknownFields(body.subject, body.body);
   if (unknown.length) errors.body = `Unknown merge field${unknown.length > 1 ? "s" : ""}: ${unknown.map((f) => `{{${f}}}`).join(", ")}`;
   return errors;
@@ -38,10 +38,10 @@ templatesRouter.post("/", async (req, res) => {
   const errors = validate(body);
   if (Object.keys(errors).length) return res.status(400).json({ error: "Invalid template", errors });
   const template = await Template.create({
-    name: body.name,
+    name: String(body.name).trim(),
     channel: body.channel === "whatsapp" ? "whatsapp" : "email",
-    subject: body.subject ?? "",
-    body: body.body,
+    subject: body.channel === "whatsapp" ? "" : String(body.subject ?? "").trim(),
+    body: String(body.body),
   });
   res.status(201).json(template);
 });
@@ -53,7 +53,11 @@ templatesRouter.put("/:id", async (req, res) => {
   const body = { ...template.toObject(), ...req.body };
   const errors = validate(body);
   if (Object.keys(errors).length) return res.status(400).json({ error: "Invalid template", errors });
-  template.set({ name: body.name, subject: body.subject, body: body.body });
+  template.set({
+    name: String(body.name).trim(),
+    subject: template.channel === "whatsapp" ? "" : String(body.subject ?? "").trim(),
+    body: String(body.body),
+  });
   await template.save();
   res.json(template);
 });

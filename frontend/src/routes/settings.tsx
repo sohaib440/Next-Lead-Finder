@@ -267,7 +267,7 @@ function SettingsPage() {
         <CardHeader>
           <CardTitle className="font-display text-base font-semibold">WhatsApp messages</CardTitle>
           <CardDescription>
-            Set a message per campaign in Search History → WhatsApp message. Leads without one get the default below.
+            Create a message per campaign in Search History → WhatsApp message. It is assigned to that campaign's leads. A lead can also have its own message. Leads without either get the default below.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">

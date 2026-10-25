@@ -158,6 +158,13 @@ async function saveLead(searchId, raw, job) {
       ),
     );
   }
+  const search = await Search.findById(searchId, { whatsappTemplateId: 1 });
+  if (search?.whatsappTemplateId) {
+    await Lead.updateOne(
+      { dedupeKey, whatsappTemplateId: null },
+      { $set: { whatsappTemplateId: search.whatsappTemplateId } },
+    );
+  }
   await Promise.all([refreshScores({ dedupeKey }), refreshKeys({ dedupeKey })]);
   await Search.updateOne(
     { _id: searchId },

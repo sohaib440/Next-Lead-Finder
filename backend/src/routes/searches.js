@@ -16,6 +16,7 @@ const findSearch = (req) => Search.findOne({ $and: [{ _id: req.params.id }, sear
 /** Only admins run, control or delete searches. */
 const ownsSearch = (req) => isAdmin(req.user);
 import { decryptSecret } from "../services/security.js";
+import { assignCampaignWhatsapp } from "../services/whatsappFormat.js";
 import { cancelScrape, isActive, pauseScrape, resumeScrape, startScrape } from "../services/scrapeRunner.js";
 
 export const searchesRouter = Router();
@@ -104,13 +105,14 @@ searchesRouter.put("/:id/whatsapp", requireAdmin, async (req, res) => {
       return res.status(400).json({ error: "Choose a WhatsApp template." });
     }
   }
-  search.whatsappTemplateId = templateId;
-  await search.save();
+  const leadsAssigned = await assignCampaignWhatsapp(search, templateId);
   res.locals.audit = {
-    label: templateId ? `Set the WhatsApp message for “${search.name}”` : `Removed the WhatsApp message from “${search.name}”`,
+    label: templateId
+      ? `Set the WhatsApp message for “${search.name}” and assigned it to ${leadsAssigned} lead${leadsAssigned === 1 ? "" : "s"}`
+      : `Removed the WhatsApp message from “${search.name}”`,
     target: { type: "search", id: String(search._id), label: search.name },
   };
-  res.json(search);
+  res.json({ ...search.toJSON(), leadsAssigned });
 });
 
 // Admin: staff who receive this search's new leads in turn ([] = off).

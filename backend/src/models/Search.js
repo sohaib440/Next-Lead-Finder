@@ -41,6 +41,7 @@ const searchSchema = new mongoose.Schema(
     toJSON: {
       transform(_doc, ret) {
         ret.id = String(ret._id);
+        if (ret.whatsappTemplateId) ret.whatsappTemplateId = String(ret.whatsappTemplateId);
         ret.date = ret.createdAt;
         delete ret._id;
         delete ret.__v;

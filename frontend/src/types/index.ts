@@ -28,6 +28,8 @@ export interface Lead {
   priority: LeadPriority;
   /** Pinned leads are listed first. */
   pinned?: boolean;
+  /** WhatsApp template assigned to this lead. Null means use its campaign's message. */
+  whatsappTemplateId?: string | null;
   whatsappStatus?: WhatsAppStatus;
   whatsappCheckedAt?: string | null;
   whatsappCheckedBy?: string | null;

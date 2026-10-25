@@ -31,6 +31,7 @@ const settingsSchema = new mongoose.Schema(
     toJSON: {
       transform(_doc, ret) {
         // The key is write-only from the API's point of view.
+        if (ret.defaultWhatsappTemplateId) ret.defaultWhatsappTemplateId = String(ret.defaultWhatsappTemplateId);
         ret.hasPlacesApiKey = Boolean(ret.googlePlacesApiKey);
         ret.placesApiKeyHint = ret.googlePlacesApiKey ? `••••${decryptSecret(ret.googlePlacesApiKey).slice(-4)}` : null;
         delete ret.googlePlacesApiKey;

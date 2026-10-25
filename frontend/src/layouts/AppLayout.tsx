@@ -129,7 +129,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <ActivityTracker />
         <Header />
         <main className="flex-1 px-4 py-6 lg:px-8 lg:py-8">
-          <div className="mx-auto w-full max-w-7xl">{children}</div>
+          <div className="w-full">{children}</div>
         </main>
       </div>
     </div>

@@ -301,7 +301,12 @@ export const api = {
       json("POST", input),
     ),
   setSearchWhatsapp: (searchId: string, templateId: string | null) =>
-    request<SearchRecord>(`/searches/${searchId}/whatsapp`, json("PUT", { templateId })),
+    request<SearchRecord & { leadsAssigned: number }>(
+      `/searches/${searchId}/whatsapp`,
+      json("PUT", { templateId }),
+    ),
+  setLeadWhatsapp: (leadId: string, templateId: string | null) =>
+    request<Lead>(`/leads/${leadId}/whatsapp`, json("PUT", { templateId })),
 
   markRecipientReplied: (campaignId: string, recipientId: string) =>
     request<CampaignRecipient>(
