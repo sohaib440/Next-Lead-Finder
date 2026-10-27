@@ -676,6 +676,8 @@ export interface WhatsAppFormat {
   /** True when this user must send exactly this message. */
   mustUse: boolean;
   preview: WhatsAppMessage | null;
+  /** Set once anyone has messaged this number: each number gets one WhatsApp message. */
+  alreadyMessaged: { at: string; by: string | null; message: string } | null;
 }
 
 export interface WhatsAppQueueItem extends WhatsAppMessage {

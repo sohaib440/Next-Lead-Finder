@@ -77,6 +77,11 @@ export function WhatsAppDialog({
 
   useEffect(() => {
     if (!open || !format.data) return;
+    if (format.data.alreadyMessaged) {
+      setPreview(null);
+      setError(format.data.alreadyMessaged.message);
+      return;
+    }
     if (locked) {
       setPreview(format.data.preview);
       setError(

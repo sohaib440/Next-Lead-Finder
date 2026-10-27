@@ -282,17 +282,16 @@ export const api = {
     request<{ file: string; size: number; documents: number }>("/backups", json("POST")),
   downloadBackupUrl: (file: string) => `${API_URL}/backups/${encodeURIComponent(file)}/download`,
 
-  renderWhatsApp: (leadId: string, body: string) =>
+  renderWhatsApp: (leadId: string, body: string, preview = false) =>
     request<WhatsAppMessage & { templateName?: string | null }>(
       "/whatsapp/render",
-      json("POST", { leadId, body }),
+      json("POST", { leadId, body, preview }),
     ),
   whatsappFormat: (leadId: string) => request<WhatsAppFormat>(`/whatsapp/format/${leadId}`),
   whatsappQueue: (input: {
     leadIds?: string[];
     query?: CampaignAudience["query"];
     body: string;
-    onlyNotMessaged: boolean;
     skipLandlines?: boolean;
     useFormats?: boolean;
   }) =>

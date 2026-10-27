@@ -33,7 +33,7 @@ function cleanOptions(options = {}) {
   const delay = Number(options.delaySeconds);
   return {
     delaySeconds: Number.isFinite(delay) ? Math.min(3600, Math.max(5, Math.round(delay))) : 45,
-    skipEmailedBefore: options.skipEmailedBefore !== false,
+    skipEmailedBefore: true,
     skipClosed: options.skipClosed !== false,
   };
 }

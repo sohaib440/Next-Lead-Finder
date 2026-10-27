@@ -144,15 +144,14 @@ export async function resolveAudience(audience, options = {}, excludeCampaignId 
   }).limit(20000);
 
   const emails = [...new Set(leads.map((l) => l.email?.trim().toLowerCase()).filter(Boolean))];
+  // Each address gets one campaign email, whoever sends it — this isn't optional.
   const [suppressed, emailedBefore] = await Promise.all([
     Suppression.find({ email: { $in: emails } }, { email: 1 }).then((r) => new Set(r.map((s) => s.email))),
-    options.skipEmailedBefore === false
-      ? new Set()
-      : Recipient.distinct("email", {
-          email: { $in: emails },
-          status: "sent",
-          ...(excludeCampaignId ? { campaignId: { $ne: excludeCampaignId } } : {}),
-        }).then((r) => new Set(r)),
+    Recipient.distinct("email", {
+      email: { $in: emails },
+      status: "sent",
+      ...(excludeCampaignId ? { campaignId: { $ne: excludeCampaignId } } : {}),
+    }).then((r) => new Set(r)),
   ]);
 
   const send = [];
@@ -170,7 +169,7 @@ export async function resolveAudience(audience, options = {}, excludeCampaignId 
     else if (seen.has(email)) reason = "Duplicate address in this campaign";
     else if (suppressed.has(email)) reason = "On the do-not-email list";
     else if (options.skipClosed !== false && ["won", "lost"].includes(lead.stage)) reason = `Lead is ${lead.stage}`;
-    else if (emailedBefore.has(email)) reason = "Already emailed by another campaign";
+    else if (emailedBefore.has(email)) reason = "Already emailed";
     seen.add(email);
     (reason ? skipped : send).push({ lead, email, reason });
   }
@@ -287,6 +286,13 @@ async function sendNext(campaign) {
   // Unsubscribes can arrive while a campaign is running.
   if (await Suppression.exists({ email: recipient.email })) {
     await Recipient.updateOne({ _id: recipient._id }, { status: "skipped", reason: "On the do-not-email list" });
+    await Campaign.updateOne({ _id: campaign._id }, { $inc: { skipped: 1 } });
+    return;
+  }
+
+  // Another campaign may have reached this address since this one was queued.
+  if (await Recipient.exists({ email: recipient.email, status: "sent", campaignId: { $ne: campaign._id } })) {
+    await Recipient.updateOne({ _id: recipient._id }, { status: "skipped", reason: "Already emailed" });
     await Campaign.updateOne({ _id: campaign._id }, { $inc: { skipped: 1 } });
     return;
   }

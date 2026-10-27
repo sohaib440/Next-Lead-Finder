@@ -843,18 +843,10 @@ function AudienceCard({
               Slower sending looks less like spam.
             </p>
           </div>
-          <Label className="flex items-start justify-between gap-3 rounded-lg border border-border p-3 font-normal">
-            <span>
-              <span className="block text-sm font-medium">Skip already emailed</span>
-              <span className="block text-[11px] text-muted-foreground">
-                Addresses an earlier campaign reached.
-              </span>
-            </span>
-            <Switch
-              checked={options.skipEmailedBefore}
-              onCheckedChange={(v) => onChange({ options: { ...options, skipEmailedBefore: v } })}
-            />
-          </Label>
+          <p className="rounded-lg border border-border p-3 text-[11px] text-muted-foreground">
+            <span className="block text-sm font-medium text-foreground">One email per address</span>
+            Addresses an earlier campaign already reached are always skipped.
+          </p>
           <Label className="flex items-start justify-between gap-3 rounded-lg border border-border p-3 font-normal">
             <span>
               <span className="block text-sm font-medium">Skip won & lost</span>

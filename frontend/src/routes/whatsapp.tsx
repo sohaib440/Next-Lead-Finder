@@ -95,7 +95,6 @@ function WhatsAppPage() {
     stage: OPEN_STAGES,
   });
   const [body, setBody] = useState(DEFAULT_WHATSAPP_MESSAGE);
-  const [onlyNotMessaged, setOnlyNotMessaged] = useState(true);
   const [queue, setQueue] = useState<WhatsAppQueueItem[] | null>(null);
   // What happened to each opened chat, and the chat waiting for an answer.
   const [outcomes, setOutcomes] = useState<Map<string, WhatsAppResult>>(new Map());
@@ -117,7 +116,6 @@ function WhatsAppPage() {
       const res = await api.whatsappQueue({
         ...(mode === "selected" ? { leadIds: selectedIds } : { query }),
         body,
-        onlyNotMessaged,
         skipLandlines,
         useFormats: usingFormats,
       });
@@ -282,20 +280,14 @@ function WhatsAppPage() {
               )}
               <Label className="flex items-center gap-2 border-t border-border pt-4 font-normal">
                 <Checkbox
-                  checked={onlyNotMessaged}
-                  onCheckedChange={(v) => setOnlyNotMessaged(v === true)}
-                />
-                Skip leads already messaged on WhatsApp
-              </Label>
-              <Label className="flex items-center gap-2 font-normal">
-                <Checkbox
                   checked={skipLandlines}
                   onCheckedChange={(v) => setSkipLandlines(v === true)}
                 />
                 Skip landline numbers (they almost never have WhatsApp)
               </Label>
               <p className="text-xs text-muted-foreground">
-                Numbers marked “Not on WhatsApp” are always left out.
+                Numbers already messaged (by anyone) and numbers marked “Not on WhatsApp” are always
+                left out — each number gets one message.
               </p>
             </CardContent>
           </Card>

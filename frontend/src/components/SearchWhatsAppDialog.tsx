@@ -85,7 +85,7 @@ export function SearchWhatsAppDialog({
           if (!cancelled) setPreview(null);
           return;
         }
-        const r = await api.renderWhatsApp(lead.id, body);
+        const r = await api.renderWhatsApp(lead.id, body, true);
         if (!cancelled) setPreview({ text: r.text, lead: lead.businessName });
       });
     }, 300);
