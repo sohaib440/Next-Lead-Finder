@@ -287,6 +287,8 @@ export const api = {
       "/whatsapp/render",
       json("POST", { leadId, body, preview }),
     ),
+  claimWhatsApp: (leadId: string) =>
+    request<{ ok: true }>("/whatsapp/claim", json("POST", { leadId })),
   whatsappFormat: (leadId: string) => request<WhatsAppFormat>(`/whatsapp/format/${leadId}`),
   whatsappQueue: (input: {
     leadIds?: string[];

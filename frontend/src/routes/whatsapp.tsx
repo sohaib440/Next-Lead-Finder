@@ -43,7 +43,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   DEFAULT_WHATSAPP_MESSAGE,
   WhatsAppResultStep,
-  openWhatsApp,
+  claimAndOpenWhatsApp,
 } from "@/components/WhatsAppDialog";
 import {
   queryKeys,
@@ -131,10 +131,16 @@ function WhatsAppPage() {
     }
   }
 
-  function send(item: WhatsAppQueueItem) {
+  async function send(item: WhatsAppQueueItem) {
     if (!item.url) return;
-    openWhatsApp(item.url);
-    setAwaiting(item);
+    try {
+      await claimAndOpenWhatsApp(item.leadId, item.url);
+      setAwaiting(item);
+    } catch (err) {
+      // Someone else (or another tab) got to this number first.
+      setSkipped((s) => new Set(s).add(item.leadId));
+      toast.error(err instanceof Error ? err.message : "Couldn't open WhatsApp.");
+    }
   }
 
   async function record(result: WhatsAppResult) {
@@ -576,7 +582,11 @@ function WhatsAppPage() {
       <Dialog
         open={!!awaiting}
         onOpenChange={(open) => {
-          if (!open && !recording) void record("not_sent");
+          // Dismissing without answering keeps the number reserved (it may have been sent).
+          if (!open && !recording && awaiting) {
+            setSkipped((s) => new Set(s).add(awaiting.leadId));
+            setAwaiting(null);
+          }
         }}
       >
         <DialogContent className="sm:max-w-md">

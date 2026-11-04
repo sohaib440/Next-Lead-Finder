@@ -470,10 +470,11 @@ leadsRouter.post("/:id/whatsapp-result", async (req, res) => {
   if (!["sent", "not_on_whatsapp", "not_sent"].includes(result)) {
     return res.status(400).json({ error: "result must be sent, not_on_whatsapp or not_sent" });
   }
-  const lead = await Lead.findOne(scoped(req.user, { _id: req.params.id }), { _id: 1, businessName: 1 });
+  const lead = await Lead.findOne(scoped(req.user, { _id: req.params.id }), { _id: 1, businessName: 1, phoneKey: 1 });
   if (!lead) return res.status(404).json({ error: "Lead not found" });
   const target = { type: "lead", id: String(lead._id), label: lead.businessName };
   if (result === "not_sent") {
+    // The number stays locked for life: once a chat was opened, it is never offered again.
     res.locals.audit = { action: "whatsapp.not_sent", label: "Opened WhatsApp but didn't send", target };
     return res.json({ ok: true });
   }

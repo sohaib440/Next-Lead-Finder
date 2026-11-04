@@ -2,7 +2,7 @@ import { Router } from "express";
 import mongoose from "mongoose";
 import { Lead } from "../models/Lead.js";
 import { getSettings } from "../models/Settings.js";
-import { alreadyMessagedText, renderWhatsApp, whatsappSent } from "../services/whatsapp.js";
+import { alreadyMessagedText, claimWhatsApp, renderWhatsApp, whatsappSent } from "../services/whatsapp.js";
 import { templateSummary, whatsappFormats } from "../services/whatsappFormat.js";
 import { scoped } from "../services/access.js";
 import { leadFilter } from "./leads.js";
@@ -47,6 +47,25 @@ whatsappRouter.post("/render", async (req, res) => {
   const text = mustUse ? format.template.body : String(body ?? "");
   const rendered = renderWhatsApp(text, lead, req.user, settings.defaultCountry);
   res.json({ ...rendered, ...(already ? { url: null } : {}), templateName: mustUse ? format.template.name : null });
+});
+
+/**
+ * Called just before a chat opens: reserves the number so nobody (this user included, from another
+ * tab or lead) can open a second chat to it. 409 when the number is already taken.
+ */
+whatsappRouter.post("/claim", async (req, res) => {
+  const { leadId } = req.body ?? {};
+  if (!mongoose.isValidObjectId(leadId)) return res.status(400).json({ error: "Invalid lead" });
+  const lead = await Lead.findOne(scoped(req.user, { _id: leadId }));
+  if (!lead) return res.status(404).json({ error: "Lead not found" });
+  const taken = await claimWhatsApp(lead, req.user);
+  if (taken) return res.status(409).json({ error: alreadyMessagedText(taken), code: "already_messaged" });
+  res.locals.audit = {
+    action: "whatsapp.opened",
+    label: "Opened a WhatsApp chat",
+    target: { type: "lead", id: String(lead._id), label: lead.businessName },
+  };
+  res.json({ ok: true });
 });
 
 /**

@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Activity } from "../models/Activity.js";
 import { Lead } from "../models/Lead.js";
+import { WhatsAppClaim, claimKey } from "../models/WhatsAppClaim.js";
 import { renderText } from "./email.js";
 import { callingCode, likelyMobile, whatsappNumber } from "./phone.js";
 
@@ -62,7 +63,32 @@ export async function whatsappSent(leads) {
     const key = keyOf.get(String(a._id));
     if (key && !byKey.has(key)) byKey.set(key, first);
   }
-  return new Map(leads.map((l) => [String(l._id), byLead.get(String(l._id)) ?? (l.phoneKey && byKey.get(l.phoneKey)) ?? null]));
+  // A chat already opened on the number counts too, even before its sender says it went through.
+  const claims = await WhatsAppClaim.find({ key: { $in: [...new Set(leads.map(claimKey))] } }, { key: 1, by: 1, createdAt: 1 });
+  const byClaim = new Map(claims.map((c) => [c.key, { at: c.createdAt, by: c.by }]));
+  return new Map(
+    leads.map((l) => [
+      String(l._id),
+      byLead.get(String(l._id)) ?? (l.phoneKey && byKey.get(l.phoneKey)) ?? byClaim.get(claimKey(l)) ?? null,
+    ]),
+  );
+}
+
+/**
+ * Reserves the lead's number for this user before WhatsApp opens. Returns null when reserved, or
+ * who already messaged / is messaging the number.
+ */
+export async function claimWhatsApp(lead, user) {
+  const already = (await whatsappSent([lead])).get(String(lead._id));
+  if (already) return already;
+  try {
+    await WhatsAppClaim.create({ key: claimKey(lead), leadId: lead._id, by: user?.name ?? null, userId: user?._id ?? null });
+    return null;
+  } catch (err) {
+    if (err?.code !== 11000) throw err;
+    const claim = await WhatsAppClaim.findOne({ key: claimKey(lead) });
+    return { at: claim?.createdAt ?? new Date(), by: claim?.by ?? null };
+  }
 }
 
 export const alreadyMessagedText = (sent) =>

@@ -44,6 +44,27 @@ export function openWhatsApp(url: string) {
 }
 
 /**
+ * Reserves the lead's number on the server, then opens the chat — so each number gets one message
+ * even across staff and tabs. The tab opens straight away (popup blockers allow it only inside the
+ * click) and is closed again if the number is already taken. Throws with the reason in that case.
+ */
+export async function claimAndOpenWhatsApp(leadId: string, url: string) {
+  const tab = window.open("about:blank", "_blank");
+  try {
+    await api.claimWhatsApp(leadId);
+  } catch (err) {
+    tab?.close();
+    throw err;
+  }
+  if (tab) {
+    tab.opener = null;
+    tab.location.href = url;
+  } else {
+    openWhatsApp(url);
+  }
+}
+
+/**
  * Shows the exact message before it opens in WhatsApp. When the admin requires their message
  * for this lead's campaign, it's shown read-only; otherwise it can be edited.
  */
@@ -114,10 +135,16 @@ export function WhatsAppDialog({
     if (open) setOpened(false);
   }, [open]);
 
-  function send() {
+  async function send() {
     if (!preview?.url) return;
-    openWhatsApp(preview.url);
-    setOpened(true);
+    try {
+      await claimAndOpenWhatsApp(lead.id, preview.url);
+      setOpened(true);
+    } catch (err) {
+      setPreview(null);
+      setError(err instanceof Error ? err.message : "Couldn't open WhatsApp.");
+      void invalidateData();
+    }
   }
 
   async function record(result: WhatsAppResult) {
@@ -140,9 +167,10 @@ export function WhatsAppDialog({
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        // Closing after opening WhatsApp without answering counts as "didn't send".
-        if (!next && opened && !recording) void record("not_sent");
-        else onOpenChange(next);
+        // Closing after opening WhatsApp without answering keeps the number reserved — the message
+        // may well have gone. Numbers are locked for life once a chat is opened.
+        if (!next && opened && !recording) void invalidateData();
+        onOpenChange(next);
       }}
     >
       <DialogContent className="sm:max-w-lg">
@@ -150,7 +178,6 @@ export function WhatsAppDialog({
           <WhatsAppResultStep
             busy={recording}
             onPick={(r) => void record(r)}
-            onBack={() => setOpened(false)}
           />
         ) : (
           <>
@@ -339,7 +366,7 @@ export function WhatsAppResultStep({
           onClick={() => onPick("not_sent")}
           className="justify-start"
         >
-          I didn't send it
+          I didn't send it (the number still stays locked)
         </Button>
       </div>
       {onBack && (
